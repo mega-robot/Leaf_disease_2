@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Leaf Health Prediction</title>
+  <title>Leaf Health Checker</title>
   <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@0.8/dist/teachablemachine-image.min.js"></script>
   <style>
     body {
@@ -20,45 +20,51 @@
       font-weight: bold;
       color: #1b5e20;
     }
-    #upload-button {
-      margin-top: 20px;
-    }
   </style>
 </head>
 <body>
   <h1>Leaf Health Checker</h1>
   <input type="file" accept="image/*" onchange="handleUpload(event)">
-  <div id="label-container"></div>
+  <div id="label-container">Waiting for image...</div>
 
   <script type="text/javascript">
-  const URL = "https://teachablemachine.withgoogle.com/models/liz-08qWt/";
-  let model, maxPredictions;
+    const URL = "https://teachablemachine.withgoogle.com/models/liz-08qWt/";
+    let model, maxPredictions;
 
-  async function loadModel() {
-    const modelURL = URL + "model.json";
-    const metadataURL = URL + "metadata.json";
-    model = await tmImage.load(modelURL, metadataURL);
-    maxPredictions = model.getTotalClasses();
-  }
+    async function loadModel() {
+      const modelURL = URL + "model.json";
+      const metadataURL = URL + "metadata.json";
+      model = await tmImage.load(modelURL, metadataURL);
+      maxPredictions = model.getTotalClasses();
+      console.log("Model loaded");
+    }
 
-  async function handleUpload(event) {
-    const file = event.target.files[0];
-    const image = new Image();
-    image.src = URL.createObjectURL(file);
-    image.onload = async () => {
-      document.body.appendChild(image); // TEMP: display image to confirm it's loaded
+    async function handleUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const image = document.createElement("img");
+      image.src = URL.createObjectURL(file);
+      image.crossOrigin = "anonymous";
       image.style.maxWidth = "300px";
       image.style.display = "block";
       image.style.margin = "20px auto";
 
-      const prediction = await model.predict(image);
-      const topPrediction = prediction.reduce((max, p) => (p.probability > max.probability ? p : max));
-      document.getElementById("label-container").innerText = `Prediction: ${topPrediction.className}`;
-    };
-  }
+      // Clear old prediction and image
+      document.getElementById("label-container").innerText = "Processing...";
+      const oldImage = document.getElementById("preview-image");
+      if (oldImage) oldImage.remove();
+      image.id = "preview-image";
+      document.body.appendChild(image);
 
-  loadModel();
-</script>
+      image.onload = async () => {
+        const prediction = await model.predict(image);
+        const top = prediction.reduce((a, b) => (a.probability > b.probability ? a : b));
+        document.getElementById("label-container").innerText = `Prediction: ${top.className}`;
+      };
+    }
 
+    window.addEventListener("DOMContentLoaded", loadModel);
+  </script>
 </body>
 </html>
