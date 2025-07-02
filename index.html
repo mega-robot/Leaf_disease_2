@@ -31,28 +31,34 @@
   <div id="label-container"></div>
 
   <script type="text/javascript">
-    const URL = "https://teachablemachine.withgoogle.com/models/liz-08qWt/";
-    let model, maxPredictions;
+  const URL = "https://teachablemachine.withgoogle.com/models/liz-08qWt/";
+  let model, maxPredictions;
 
-    async function loadModel() {
-      const modelURL = URL + "model.json";
-      const metadataURL = URL + "metadata.json";
-      model = await tmImage.load(modelURL, metadataURL);
-      maxPredictions = model.getTotalClasses();
-    }
+  async function loadModel() {
+    const modelURL = URL + "model.json";
+    const metadataURL = URL + "metadata.json";
+    model = await tmImage.load(modelURL, metadataURL);
+    maxPredictions = model.getTotalClasses();
+  }
 
-    async function handleUpload(event) {
-      const file = event.target.files[0];
-      const image = new Image();
-      image.src = URL.createObjectURL(file);
-      image.onload = async () => {
-        const prediction = await model.predict(image);
-        const topPrediction = prediction.reduce((max, p) => (p.probability > max.probability ? p : max));
-        document.getElementById("label-container").innerText = `Prediction: ${topPrediction.className}`;
-      };
-    }
+  async function handleUpload(event) {
+    const file = event.target.files[0];
+    const image = new Image();
+    image.src = URL.createObjectURL(file);
+    image.onload = async () => {
+      document.body.appendChild(image); // TEMP: display image to confirm it's loaded
+      image.style.maxWidth = "300px";
+      image.style.display = "block";
+      image.style.margin = "20px auto";
 
-    loadModel();
-  </script>
+      const prediction = await model.predict(image);
+      const topPrediction = prediction.reduce((max, p) => (p.probability > max.probability ? p : max));
+      document.getElementById("label-container").innerText = `Prediction: ${topPrediction.className}`;
+    };
+  }
+
+  loadModel();
+</script>
+
 </body>
 </html>
